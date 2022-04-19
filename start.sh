@@ -167,6 +167,11 @@ prepare_for_openwhisk() {
     # Args: 1 = IP, 2 = num nodes, 3 = num invokers, 4 = invoker engine
     # Iterate over each node and set the openwhisk role
     # From https://superuser.com/questions/284187/bash-iterating-over-lines-in-a-variable
+    
+    rm -rf /home/openwhisk-deploy-kube
+    git clone https://github.com/hunhoffe/openwhisk-deploy-kube.git /home/openwhisk-deploy-kube
+    cd /home/openwhisk-deploy-kube
+    git checkout --track origin/newscheduler
 
     NODE_NAMES=$(kubectl get nodes -o name)
     CORE_NODES=$(($2-$3))
