@@ -307,6 +307,9 @@ for FILE in /users/*; do
     sudo chsh -s `which bash` ${CURRENT_USER}
 done
 
+# Install additional packages
+sudo apt -y install docker-compose jq
+
 # Use second argument (node IP) to replace filler in kubeadm configuration
 sudo sed -i.bak "s/REPLACE_ME_WITH_IP/$2/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
