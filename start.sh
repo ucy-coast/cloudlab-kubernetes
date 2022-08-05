@@ -304,7 +304,7 @@ sudo chmod -R g+rw $INSTALL_DIR
 # Change user login shell to Bash
 for FILE in /users/*; do
     CURRENT_USER=${FILE##*/}
-    chsh -s `which bash` ${CURRENT_USER}
+    sudo chsh -s `which bash` ${CURRENT_USER}
 done
 
 # Use second argument (node IP) to replace filler in kubeadm configuration
@@ -346,12 +346,6 @@ apply_calico
 # Coordinate master to add nodes to the kubernetes cluster
 # Argument is number of nodes
 add_cluster_nodes $3
-
-# Change user login shell to Bash
-for FILE in /users/*; do
-    CURRENT_USER=${FILE##*/}
-    chsh -s `which bash` ${CURRENT_USER}
-done
 
 # Exit early if we don't need to deploy OpenWhisk
 if [ "$5" = "False" ]; then
