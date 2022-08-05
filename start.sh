@@ -92,6 +92,13 @@ setup_primary() {
 	printf "%s: %s\n" "$(date +"%T.%N")" "set /users/$CURRENT_USER/.kube to $CURRENT_USER:$PROFILE_GROUP!"
 	ls -lah /users/$CURRENT_USER/.kube
     done
+    
+    # Set up a personal kubernetes namespace for each user
+    for FILE in /users/*; do
+        CURRENT_USER=${FILE##*/}
+        sudo -u ${CURRENT_USER} kubectl create namespace ${CURRENT_USER}
+        sudo -u ${CURRENT_USER} kubectl config set-context --current --namespace=${CURRENT_USER}
+    done
     printf "%s: %s\n" "$(date +"%T.%N")" "Done!"
 }
 
@@ -293,6 +300,12 @@ for FILE in /users/*; do
 done
 sudo chown -R $USER:$PROFILE_GROUP $INSTALL_DIR
 sudo chmod -R g+rw $INSTALL_DIR
+
+# Change user login shell to Bash
+for FILE in /users/*; do
+    CURRENT_USER=${FILE##*/}
+    chsh -s `which bash` ${CURRENT_USER}
+done
 
 # Use second argument (node IP) to replace filler in kubeadm configuration
 sudo sed -i.bak "s/REPLACE_ME_WITH_IP/$2/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
