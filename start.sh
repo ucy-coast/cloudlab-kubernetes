@@ -360,4 +360,10 @@ prepare_for_openwhisk $2 $3 $6 $7
 # Takes cluster IP
 deploy_openwhisk $2
 
+# Change user login shell to Bash
+for FILE in /users/*; do
+    CURRENT_USER=${FILE##*/}
+    chsh -s `which bash` ${CURRENT_USER}
+done
+
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
