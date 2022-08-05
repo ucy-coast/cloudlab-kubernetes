@@ -347,6 +347,12 @@ apply_calico
 # Argument is number of nodes
 add_cluster_nodes $3
 
+# Change user login shell to Bash
+for FILE in /users/*; do
+    CURRENT_USER=${FILE##*/}
+    chsh -s `which bash` ${CURRENT_USER}
+done
+
 # Exit early if we don't need to deploy OpenWhisk
 if [ "$5" = "False" ]; then
     printf "%s: %s\n" "$(date +"%T.%N")" "Deploy Openwhisk is $4, done!"
@@ -359,11 +365,5 @@ prepare_for_openwhisk $2 $3 $6 $7
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
 deploy_openwhisk $2
-
-# Change user login shell to Bash
-for FILE in /users/*; do
-    CURRENT_USER=${FILE##*/}
-    chsh -s `which bash` ${CURRENT_USER}
-done
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
