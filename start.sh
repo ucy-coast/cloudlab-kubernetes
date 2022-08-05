@@ -96,8 +96,8 @@ setup_primary() {
     # Set up a personal kubernetes namespace for each user
     for FILE in /users/*; do
         CURRENT_USER=${FILE##*/}
-        sudo -u ${CURRENT_USER} kubectl create namespace ${CURRENT_USER}
-        sudo -u ${CURRENT_USER} kubectl config set-context --current --namespace=${CURRENT_USER}
+        sudo -H -u ${CURRENT_USER} kubectl create namespace ${CURRENT_USER}
+        sudo -H -u ${CURRENT_USER} kubectl config set-context --current --namespace=${CURRENT_USER}
     done
     printf "%s: %s\n" "$(date +"%T.%N")" "Done!"
 }
