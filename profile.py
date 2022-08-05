@@ -37,7 +37,7 @@ pc.defineParameter("startKubernetes",
 pc.defineParameter("deployOpenWhisk",
                    "Deploy OpenWhisk",
                    portal.ParameterType.BOOLEAN,
-                   True,
+                   False,
                    longDescription="Use helm to deploy OpenWhisk.")
 # Below two options copy/pasted directly from small-lan experiment on CloudLab
 # Optional ephemeral blockstore
@@ -104,7 +104,7 @@ lan.bandwidth = BANDWIDTH
 # The start script relies on the idea that the primary node is 10.10.1.1, and subsequent nodes follow the
 # pattern 10.10.1.2, 10.10.1.3, ...
 for i in range(params.nodeCount):
-    name = "ow"+str(i+1)
+    name = "kube"+str(i+1)
     create_node(name, nodes, lan)
 
 # Iterate over secondary nodes first
