@@ -259,6 +259,16 @@ deploy_openwhisk() {
     done
 }
 
+deploy_go() {
+    echo "Installing Go"
+    GO_TARBALL=go1.24.5.linux-amd64.tar.gz
+    wget https://go.dev/dl/$GO_TARBALL -P /local/downloads
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /local/downloads/$GO_TARBALL
+    if ! sudo grep -qxF 'export PATH=$PATH:/usr/local/go/bin' /etc/profile; then
+        echo 'export PATH=$PATH:/usr/local/go/bin' | sudo tee -a /etc/profile > /dev/null
+    fi    
+}
+
 # Start by recording the arguments
 printf "%s: args=(" "$(date +"%T.%N")"
 for var in "$@"
@@ -362,5 +372,7 @@ prepare_for_openwhisk $2 $3 $6 $7
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
 deploy_openwhisk $2
+
+deploy_go
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
