@@ -318,6 +318,7 @@ for FILE in /users/*; do
 done
 
 # Install additional packages
+sudo apt update
 sudo apt -y install docker-compose jq
 
 deploy_go
