@@ -320,6 +320,8 @@ done
 # Install additional packages
 sudo apt -y install docker-compose jq
 
+deploy_go
+
 # Use second argument (node IP) to replace filler in kubeadm configuration
 sudo sed -i.bak "s/REPLACE_ME_WITH_IP/$2/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
@@ -372,7 +374,5 @@ prepare_for_openwhisk $2 $3 $6 $7
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
 deploy_openwhisk $2
-
-deploy_go
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
