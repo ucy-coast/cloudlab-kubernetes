@@ -104,7 +104,7 @@ setup_primary() {
 
 apply_calico() {
     # https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
-    helm repo add projectcalico https://projectcalico.docs.tigera.io/charts > $INSTALL_DIR/calico_install.log 2>&1 
+	helm repo add projectcalico https://docs.tigera.io/calico/charts > "$INSTALL_DIR/calico_install.log" 2>&1
     if [ $? -ne 0 ]; then
        echo "***Error: Error when loading helm calico repo. Log written to $INSTALL_DIR/calico_install.log"
        exit 1
