@@ -146,10 +146,10 @@ apply_calico() {
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Downloaded Calico v3.22.0 Helm chart archive"
 
-    # Install Calico v3.22.0 via Helm with the CloudLab 10.11.0.0/16 pod network CIDR
-    helm install calico "$INSTALL_DIR/calico-helm/tigera-operator-v3.22.0.tgz" \
+    kubectl create namespace tigera-operator
+
+    helm upgrade --install calico "$INSTALL_DIR/calico-helm/tigera-operator-v3.22.0.tgz" \
       --namespace tigera-operator \
-      --create-namespace \
       --set installation.calicoNetwork.ipPools[0].cidr="10.11.0.0/16" >> "$INSTALL_DIR/calico_install.log" 2>&1
 
     if [ $? -ne 0 ]; then
