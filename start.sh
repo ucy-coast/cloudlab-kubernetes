@@ -102,7 +102,7 @@ setup_primary() {
     printf "%s: %s\n" "$(date +"%T.%N")" "Done!"
 }
 
-apply_calico() {
+apply_calico_obsolete() {
     # https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
     helm repo add projectcalico https://docs.tigera.io/calico/charts > "$INSTALL_DIR/calico_install.log" 2>&1
     if [ $? -ne 0 ]; then
@@ -111,7 +111,7 @@ apply_calico() {
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Loaded helm calico repo"
 
-    helm install calico projectcalico/tigera-operator --version v3.27.0 >> $INSTALL_DIR/calico_install.log 2>&1
+    helm install calico projectcalico/tigera-operator --version v3.22.0 >> $INSTALL_DIR/calico_install.log 2>&1
     if [ $? -ne 0 ]; then
        echo "***Error: Error when installing calico with helm. Log appended to $INSTALL_DIR/calico_install.log"
        exit 1
@@ -130,6 +130,32 @@ apply_calico() {
         NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
         NUM_RUNNING=$((NUM_PODS-NUM_RUNNING))
     done
+    printf "%s: %s\n" "$(date +"%T.%N")" "Calico running!"
+}
+
+apply_calico() {
+    printf "%s: %s\n" "$(date +"%T.%N")" "Applying Calico v3.22.0 manifest..."
+
+    # Apply official Calico v3.22.0 manifest directly
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.22.0/manifests/calico.yaml > "$INSTALL_DIR/calico_install.log" 2>&1
+    if [ $? -ne 0 ]; then
+       echo "***Error: Failed applying Calico v3.22.0 manifest. Log written to $INSTALL_DIR/calico_install.log"
+       exit 1
+    fi
+
+    # Set Pod CIDR env variable to match CloudLab 10.11.0.0/16 range
+    kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_CIDR="10.11.0.0/16" >> "$INSTALL_DIR/calico_install.log" 2>&1
+
+    printf "%s: %s\n" "$(date +"%T.%N")" "Applied Calico v3.22.0 networking"
+
+    # Wait for calico pods in kube-system to reach Ready status
+    printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for Calico daemonset rollout..."
+    kubectl rollout status daemonset/calico-node -n kube-system --timeout=300s >> "$INSTALL_DIR/calico_install.log" 2>&1
+    if [ $? -ne 0 ]; then
+       echo "***Error: Calico pods failed to reach running state."
+       exit 1
+    fi
+
     printf "%s: %s\n" "$(date +"%T.%N")" "Calico running!"
 }
 
