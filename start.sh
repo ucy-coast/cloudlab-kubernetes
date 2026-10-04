@@ -92,7 +92,14 @@ setup_primary() {
 	printf "%s: %s\n" "$(date +"%T.%N")" "set /users/$CURRENT_USER/.kube to $CURRENT_USER:$PROFILE_GROUP!"
 	ls -lah /users/$CURRENT_USER/.kube
     done
-    
+
+    # Patch CoreDNS 
+	printf "%s: %s\n" "$(date +"%T.%N")" "Patching CoreDNS upstream resolvers..."
+    kubectl get configmap coredns -n kube-system -o yaml | \
+      sed 's/forward . \/etc\/resolv.conf/forward . 8.8.8.8 1.1.1.1/' | \
+      kubectl apply -f - > /dev/null 2>&1
+    kubectl rollout restart deployment coredns -n kube-system > /dev/null 2>&1
+	
     # Set up a personal kubernetes namespace for each user
     for FILE in /users/*; do
         CURRENT_USER=${FILE##*/}
