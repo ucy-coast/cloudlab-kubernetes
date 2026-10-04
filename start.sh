@@ -134,29 +134,52 @@ apply_calico_obsolete() {
 }
 
 apply_calico() {
-    printf "%s: %s\n" "$(date +"%T.%N")" "Applying Calico v3.22.0 manifest..."
+    printf "%s: %s\n" "$(date +"%T.%N")" "Downloading Calico v3.22.0 Helm chart..."
 
-    # Apply official Calico v3.22.0 manifest directly
-    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.22.0/manifests/calico.yaml > "$INSTALL_DIR/calico_install.log" 2>&1
+    # Create local directory and download official v3.22.0 Helm chart package directly from GitHub
+    mkdir -p "$INSTALL_DIR/calico-helm"
+    curl -sSL https://github.com/projectcalico/calico/releases/download/v3.22.0/tigera-operator-v3.22.0.tgz \
+        -o "$INSTALL_DIR/calico-helm/tigera-operator-v3.22.0.tgz" > "$INSTALL_DIR/calico_install.log" 2>&1
     if [ $? -ne 0 ]; then
-       echo "***Error: Failed applying Calico v3.22.0 manifest. Log written to $INSTALL_DIR/calico_install.log"
+       echo "***Error: Failed to download Calico v3.22.0 Helm chart. Log written to $INSTALL_DIR/calico_install.log"
        exit 1
     fi
+    printf "%s: %s\n" "$(date +"%T.%N")" "Downloaded Calico v3.22.0 Helm chart archive"
 
-    # Set Pod CIDR env variable to match CloudLab 10.11.0.0/16 range
-    kubectl set env daemonset/calico-node -n kube-system CALICO_IPV4POOL_CIDR="10.11.0.0/16" >> "$INSTALL_DIR/calico_install.log" 2>&1
+    # Install Calico v3.22.0 via Helm with the CloudLab 10.11.0.0/16 pod network CIDR
+    helm install calico "$INSTALL_DIR/calico-helm/tigera-operator-v3.22.0.tgz" \
+      --namespace tigera-operator \
+      --create-namespace \
+      --set installation.calicoNetwork.ipPools[0].cidr="10.11.0.0/16" >> "$INSTALL_DIR/calico_install.log" 2>&1
 
-    printf "%s: %s\n" "$(date +"%T.%N")" "Applied Calico v3.22.0 networking"
-
-    # Wait for calico pods in kube-system to reach Ready status
-    printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for Calico daemonset rollout..."
-    kubectl rollout status daemonset/calico-node -n kube-system --timeout=300s >> "$INSTALL_DIR/calico_install.log" 2>&1
     if [ $? -ne 0 ]; then
-       echo "***Error: Calico pods failed to reach running state."
+       echo "***Error: Error when installing Calico v3.22.0 with Helm. Log appended to $INSTALL_DIR/calico_install.log"
        exit 1
     fi
+    printf "%s: %s\n" "$(date +"%T.%N")" "Applied Calico v3.22.0 via Helm"
 
-    printf "%s: %s\n" "$(date +"%T.%N")" "Calico running!"
+    # Wait for calico pods to be in ready state
+    printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for calico pods to have status of 'Running': "
+    
+    # Wait until the calico-system namespace is populated and pods are created
+    while [ $(kubectl get pods -n calico-system 2>/dev/null | grep -c "Running") -eq 0 ]; do
+        sleep 2
+        printf "."
+    done
+
+    # Ensure no pods in calico-system are pending/failing
+    NUM_PODS=$(kubectl get pods -n calico-system | grep -v "NAME" | wc -l)
+    NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
+    NOT_RUNNING=$((NUM_PODS-NUM_RUNNING))
+    while [ "$NOT_RUNNING" -ne 0 ]; do
+        sleep 2
+        printf "."
+        NUM_PODS=$(kubectl get pods -n calico-system | grep -v "NAME" | wc -l)
+        NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
+        NOT_RUNNING=$((NUM_PODS-NUM_RUNNING))
+    done
+
+    printf "\n%s: %s\n" "$(date +"%T.%N")" "Calico v3.22.0 running!"
 }
 
 add_cluster_nodes() {
