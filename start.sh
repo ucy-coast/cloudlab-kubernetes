@@ -146,8 +146,13 @@ apply_calico() {
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Downloaded Calico v3.22.0 Helm chart archive"
 
-    kubectl create namespace tigera-operator
+    # Ensure namespace exists and has Helm ownership metadata
+    kubectl create namespace tigera-operator --dry-run=client -o yaml | kubectl apply -f - >> "$INSTALL_DIR/calico_install.log" 2>&1
+    kubectl label namespace tigera-operator app.kubernetes.io/managed-by=Helm --overwrite >> "$INSTALL_DIR/calico_install.log" 2>&1
+    kubectl annotate namespace tigera-operator meta.helm.sh/release-name=calico --overwrite >> "$INSTALL_DIR/calico_install.log" 2>&1
+    kubectl annotate namespace tigera-operator meta.helm.sh/release-namespace=tigera-operator --overwrite >> "$INSTALL_DIR/calico_install.log" 2>&1
 
+    # Upgrade or Install Calico
     helm upgrade --install calico "$INSTALL_DIR/calico-helm/tigera-operator-v3.22.0.tgz" \
       --namespace tigera-operator \
       --set installation.calicoNetwork.ipPools[0].cidr="10.11.0.0/16" >> "$INSTALL_DIR/calico_install.log" 2>&1
